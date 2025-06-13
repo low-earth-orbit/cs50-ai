@@ -24,7 +24,7 @@ def load_data(directory):
             people[row["id"]] = {
                 "name": row["name"],
                 "birth": row["birth"],
-                "movies": set()
+                "movies": set(),
             }
             if row["name"].lower() not in names:
                 names[row["name"].lower()] = {row["id"]}
@@ -38,7 +38,7 @@ def load_data(directory):
             movies[row["id"]] = {
                 "title": row["title"],
                 "year": row["year"],
-                "stars": set()
+                "stars": set(),
             }
 
     # Load stars
@@ -92,8 +92,42 @@ def shortest_path(source, target):
     If no possible path, returns None.
     """
 
-    # TODO
-    raise NotImplementedError
+    # create a queue frontier
+    frontier = QueueFrontier()
+    explored = set()  # sets do not allow duplicate values
+
+    # Add the source node to frontier
+    # state is person_id, action is movie_id
+    sourceNode = Node(
+        state=source, parent=None, action=None
+    )  # construct Node using source (source id)
+    frontier.add(sourceNode)
+
+    # Loop as long as frontier is not empty
+    while not frontier.empty():
+        node = frontier.remove()  # This removes the first node in the queue
+
+        # Check if the node is the target (stop criterion is met)
+        if node.state == target:
+            path = []  # form the path list
+            while node.parent is not None:
+                path.append(
+                    (node.action, node.state)
+                )  # action is movie (movie id), state is actor (person id)
+                node = node.parent  # parent is the parent node of the current node
+            path.reverse()  # re-order the list from source to target
+            return path  # exit the while loop
+
+        explored.add(node.state)  # add current movie id to explored list
+
+        # neighbors is a set consisting (movie_id, person_id) pairs
+        for movie_id, person_id in neighbors_for_person(node.state):
+            if not frontier.contains_state(person_id) and person_id not in explored:
+                child = Node(state=person_id, parent=node, action=movie_id)
+                frontier.add(child)
+
+    # no path found
+    return None
 
 
 def person_id_for_name(name):
