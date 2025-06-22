@@ -189,7 +189,68 @@ class MinesweeperAI:
             5) add any new sentences to the AI's knowledge base
                if they can be inferred from existing knowledge
         """
-        raise NotImplementedError
+        # mark the cell as a move that has been made
+        self.moves_made.add(cell)
+
+        # mark the cell as safe
+        self.mark_safe(cell)
+
+        # add new sentence
+        neighbours = set()
+        number_known_mines = 0
+        i, j = cell
+        for di in range(-1, 2):
+            for dj in range(-1, 2):
+                ni, nj = i + di, j + dj
+                if (ni, nj) == cell:
+                    continue  # skip itself
+                if (
+                    0 <= ni < self.height and 0 <= nj < self.width
+                ):  # neighbour cell must within the board
+                    neighbour = (ni, nj)
+                    if neighbour in self.mines:
+                        number_known_mines += 1  # neighbour is a known mine
+                    elif neighbour not in self.safes:
+                        neighbours.add(
+                            neighbour
+                        )  # only neighbours that are not known are added
+        adjusted_count = count - number_known_mines
+        new_sentence = Sentence(neighbours, adjusted_count)
+
+        # Only add the new sentence if it is not empty
+        if neighbours:
+            if adjusted_count == 0:
+                for neighbour in neighbours:
+                    self.mark_safe(neighbour)
+            elif adjusted_count == len(neighbours):
+                for neighbour in neighbours:
+                    self.mark_mine(neighbour)
+            else:
+                self.knowledge.append(
+                    new_sentence
+                )  # only add to knowledge if cells are unknown
+
+        # make inferences due to addition of the new sentence
+        # inference boolean is needed for the loop because when new info (mine or safe) is inferred, we need to do inference again until there is no new info can be made.
+        inference = True
+        while inference:
+            inference = False
+            for sentence in self.knowledge:
+                if not sentence.cells:
+                    continue
+                mines = set(sentence.known_mines())
+                safes = set(sentence.known_safes())
+                # Iterate over a copy to avoid modifying set during iteration
+                for mine in list(mines):
+                    if mine not in self.mines:
+                        self.mark_mine(mine)
+                        inference = True
+                for safe in list(safes):
+                    if safe not in self.safes:
+                        self.mark_safe(safe)
+                        inference = True
+        # Remove empty sentences from knowledge
+        self.knowledge = [s for s in self.knowledge if s.cells]
 
     def make_safe_move(self):
         """
