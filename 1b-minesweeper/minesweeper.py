@@ -189,25 +189,23 @@ class MinesweeperAI:
             5) add any new sentences to the AI's knowledge base
                if they can be inferred from existing knowledge
         """
-        # mark the cell as a move that has been made
+        # 1. Mark the cell as a move that has been made
         self.moves_made.add(cell)
-
-        # mark the cell as safe
+        # 2. Mark the cell as safe
         self.mark_safe(cell)
 
-        # add new sentence
+        # 3. Add a new sentence to the AI's knowledge base
         neighbours = set()
         number_known_mines = 0
-        i, j = cell
-        for di in range(-1, 2):
-            for dj in range(-1, 2):
-                ni, nj = i + di, j + dj
-                if (ni, nj) == cell:
-                    continue  # skip itself
-                if (
-                    0 <= ni < self.height and 0 <= nj < self.width
-                ):  # neighbour cell must within the board
-                    neighbour = (ni, nj)
+        for i in range(cell[0] - 1, cell[0] + 2):
+            for j in range(cell[1] - 1, cell[1] + 2):
+                # Ignore the cell itself
+                if (i, j) == cell:
+                    continue
+
+                # Update count if cell in bounds and is mine
+                if 0 <= i < self.height and 0 <= j < self.width:
+                    neighbour = (i, j)
                     if neighbour in self.mines:
                         number_known_mines += 1  # neighbour is a known mine
                     elif neighbour not in self.safes:
@@ -215,9 +213,6 @@ class MinesweeperAI:
                             neighbour
                         )  # only neighbours that are not known are added
         adjusted_count = count - number_known_mines
-        new_sentence = Sentence(neighbours, adjusted_count)
-
-        # Only add the new sentence if it is not empty
         if neighbours:
             if adjusted_count == 0:
                 for neighbour in neighbours:
@@ -226,31 +221,61 @@ class MinesweeperAI:
                 for neighbour in neighbours:
                     self.mark_mine(neighbour)
             else:
-                self.knowledge.append(
-                    new_sentence
-                )  # only add to knowledge if cells are unknown
+                new_sentence = Sentence(neighbours, adjusted_count)  # The new sentence
+                if (
+                    new_sentence not in self.knowledge and new_sentence.cells
+                ):  # Only add if not redundant
+                    self.knowledge.append(new_sentence)
 
-        # make inferences due to addition of the new sentence
-        # inference boolean is needed for the loop because when new info (mine or safe) is inferred, we need to do inference again until there is no new info can be made.
-        inference = True
-        while inference:
-            inference = False
+        # 4. Mark new safes/mines
+        self.infer()
+
+        # 5. Infer new sentences from existing ones
+        while True:
+            new_sentences = []
+            for s1 in self.knowledge:
+                for s2 in self.knowledge:
+                    if s1 == s2 or not s1.cells or not s2.cells:
+                        continue
+                    if s1.cells < s2.cells:
+                        diff_cells = s2.cells - s1.cells
+                        diff_count = s2.count - s1.count
+                        if diff_cells:
+                            new_sentence = Sentence(diff_cells, diff_count)
+                            if (
+                                new_sentence not in self.knowledge
+                                and new_sentence not in new_sentences
+                            ):
+                                new_sentences.append(new_sentence)
+            if not new_sentences:
+                break
+            self.knowledge.extend(new_sentences)
+            self.infer()
+        # Remove empty sentences
+        self.knowledge = [s for s in self.knowledge if s.cells]
+
+    def infer(self):
+        """
+        Perform inference based on current knowledge:
+        repeatedly mark new safe cells and mine cells
+        """
+        while True:
+            inference_made = False
             for sentence in self.knowledge:
                 if not sentence.cells:
                     continue
-                mines = set(sentence.known_mines())
-                safes = set(sentence.known_safes())
-                # Iterate over a copy to avoid modifying set during iteration
-                for mine in list(mines):
+                sentence_mines = list(sentence.known_mines())
+                sentence_safes = list(sentence.known_safes())
+                for mine in sentence_mines:
                     if mine not in self.mines:
                         self.mark_mine(mine)
-                        inference = True
-                for safe in list(safes):
+                        inference_made = True
+                for safe in sentence_safes:
                     if safe not in self.safes:
                         self.mark_safe(safe)
-                        inference = True
-        # Remove empty sentences from knowledge
-        self.knowledge = [s for s in self.knowledge if s.cells]
+                        inference_made = True
+            if not inference_made:
+                break
 
     def make_safe_move(self):
         """
