@@ -15,10 +15,10 @@ def main():
     print(f"PageRank Results from Sampling (n = {SAMPLES})")
     for page in sorted(ranks):
         print(f"  {page}: {ranks[page]:.4f}")
-    # ranks = iterate_pagerank(corpus, DAMPING)
-    # print(f"PageRank Results from Iteration")
-    # for page in sorted(ranks):
-    #     print(f"  {page}: {ranks[page]:.4f}")
+    ranks = iterate_pagerank(corpus, DAMPING)
+    print(f"PageRank Results from Iteration")
+    for page in sorted(ranks):
+        print(f"  {page}: {ranks[page]:.4f}")
 
 
 def crawl(directory):
@@ -57,12 +57,12 @@ def transition_model(corpus, page, damping_factor):
     N = len(corpus)
     distribution = dict()
     links = corpus[page]
-    if links:
+    if links:  # if there is a link on the page
         for page in corpus:
             distribution[page] = (1 - damping_factor) / N
             if page in links:
                 distribution[page] += damping_factor / len(links)
-    else:
+    else:  # if there is no links on the page
         for page in corpus:
             distribution[page] = 1 / N
     return distribution
@@ -103,7 +103,33 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    N = len(corpus)
+    pageranks = {page: 1 / N for page in corpus}
+    THRESHOLD = 0.001
+    while True:
+        new_pageranks = {}
+
+        for page in corpus:  # for each page in corpus
+            sum = 0
+            for i in corpus:  # check every other page
+                if corpus[i]:  # if the other page has links
+                    if (
+                        page in corpus[i]
+                    ):  # if this page is linked in the links of other page
+                        sum += pageranks[i] / len(corpus[i])
+                else:  # if the other page has no links
+                    sum += pageranks[i] / N
+            new_pageranks[page] = (1 - damping_factor) / N + damping_factor * sum
+
+        # check stop criterion
+        stop = all(
+            abs(new_pageranks[page] - pageranks[page]) < THRESHOLD for page in pageranks
+        )
+        pageranks = new_pageranks
+        if stop:
+            break
+
+    return pageranks
 
 
 if __name__ == "__main__":
