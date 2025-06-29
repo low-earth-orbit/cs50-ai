@@ -11,19 +11,14 @@ def main():
     if len(sys.argv) != 2:
         sys.exit("Usage: python pagerank.py corpus")
     corpus = crawl(sys.argv[1])
-    test(corpus)
-    # ranks = sample_pagerank(corpus, DAMPING, SAMPLES)
-    # print(f"PageRank Results from Sampling (n = {SAMPLES})")
-    # for page in sorted(ranks):
-    #     print(f"  {page}: {ranks[page]:.4f}")
+    ranks = sample_pagerank(corpus, DAMPING, SAMPLES)
+    print(f"PageRank Results from Sampling (n = {SAMPLES})")
+    for page in sorted(ranks):
+        print(f"  {page}: {ranks[page]:.4f}")
     # ranks = iterate_pagerank(corpus, DAMPING)
     # print(f"PageRank Results from Iteration")
     # for page in sorted(ranks):
     #     print(f"  {page}: {ranks[page]:.4f}")
-
-
-def test(corpus):
-    transition_model(corpus, "dfs.html", 0.85)
 
 
 def crawl(directory):
@@ -70,7 +65,6 @@ def transition_model(corpus, page, damping_factor):
     else:
         for page in corpus:
             distribution[page] = 1 / N
-    print(distribution)
     return distribution
 
 
@@ -83,25 +77,21 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    pages = list(corpus.keys())
-    print("pages = ", pages)
-    number_of_pages = len(pages)
-    print("number_of_pages = ", number_of_pages)
-    first_page = random.choice(pages)
-    # page_dist = transition_model(corpus, first_page, damping_factor)
-    # print("distribution of the page = " + page_dist)
-    pages.remove(first_page)
-    print("updated pages = ", pages)
-
-    print("first page = " + first_page)
-    print("rest pages = ")
-    print(pages)
-
-    # for page in pages:
-
-    # part_one = (1 - damping_factor) / number_of_pages
-
-    # raise NotImplementedError
+    visit_counts = {page: 0 for page in corpus}
+    first_page = random.choice(list(corpus.keys()))
+    visit_counts[first_page] += 1
+    current_page = first_page
+    for i in range(2, n + 1):  # from 2 to n
+        page_distribution = transition_model(corpus, current_page, damping_factor)
+        next_page = random.choices(
+            population=list(page_distribution.keys()),
+            weights=list(page_distribution.values()),
+            k=1,
+        )[0]
+        visit_counts[next_page] += 1
+        current_page = next_page
+    pagerank = {page: count / n for page, count in visit_counts.items()}
+    return pagerank
 
 
 def iterate_pagerank(corpus, damping_factor):
