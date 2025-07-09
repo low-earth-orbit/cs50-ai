@@ -51,8 +51,7 @@ def main():
             for two_genes in powerset(names - one_gene):
 
                 # Update probabilities with new joint probability
-                # p = joint_probability(people, one_gene, two_genes, have_trait)
-                p = joint_probability(people, {"Harry"}, {"James"}, have_trait)
+                p = joint_probability(people, one_gene, two_genes, have_trait)
                 update(probabilities, one_gene, two_genes, have_trait, p)
 
     # Ensure probabilities sum to 1
@@ -174,7 +173,16 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
     Which value for each distribution is updated depends on whether
     the person is in `have_gene` and `have_trait`, respectively.
     """
-    raise NotImplementedError
+    for person in probabilities:
+        if person in two_genes:
+            genes = 2
+        elif person in one_gene:
+            genes = 1
+        else:
+            genes = 0
+        # add
+        probabilities[person]["gene"][genes] += p
+        probabilities[person]["trait"][person in have_trait] += p
 
 
 def normalize(probabilities):
@@ -182,7 +190,16 @@ def normalize(probabilities):
     Update `probabilities` such that each probability distribution
     is normalized (i.e., sums to 1, with relative proportions the same).
     """
-    raise NotImplementedError
+    for person in probabilities:
+        # Normalize gene probabilities
+        gene_total = sum(probabilities[person]["gene"].values())
+        for gene in probabilities[person]["gene"]:
+            probabilities[person]["gene"][gene] /= gene_total
+
+        # Normalize trait probabilities
+        trait_total = sum(probabilities[person]["trait"].values())
+        for trait in probabilities[person]["trait"]:
+            probabilities[person]["trait"][trait] /= trait_total
 
 
 if __name__ == "__main__":
