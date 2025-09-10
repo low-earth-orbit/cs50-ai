@@ -99,7 +99,10 @@ class CrosswordCreator():
         (Remove any values that are inconsistent with a variable's unary
          constraints; in this case, the length of the word.)
         """
-        raise NotImplementedError
+        for variable in self.domains:
+            for word in self.domains[variable]:
+                if len(word) != variable.length:
+                    self.domains[variable].remove(word)
 
     def revise(self, x, y):
         """
@@ -110,7 +113,22 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
-        raise NotImplementedError
+        for x_word in self.domains[x]:
+            hasCorresponding = False
+            for y_word in self.domains[y]:
+                # Check if x and y overlap
+                overlap = self.crossword.overlaps[x, y]
+                if overlap is None:
+                    continue
+                i, j = overlap
+                # Check if the character at the overlap match
+                if x_word[i] == y_word[j]:
+                    hasCorresponding = True
+                    break
+            if not hasCorresponding:
+                self.domains[x].remove(x_word)
+                return True
+        return False
 
     def ac3(self, arcs=None):
         """
@@ -121,7 +139,21 @@ class CrosswordCreator():
         Return True if arc consistency is enforced and no domains are empty;
         return False if one or more domains end up empty.
         """
-        raise NotImplementedError
+        if arcs is None:
+            arcs = []
+            for x in self.domains:
+                for y in self.domains:
+                    if x != y and self.crossword.overlaps[x, y] is not None:
+                        arcs.append((x, y))
+        while arcs:
+            (x, y) = arcs.pop() # Get an arc (x, y) from the list for processing
+            if self.revise(x, y): # If a revision was made
+                if not self.domains[x]: # If domain is empty
+                    return False
+                for z in self.domains:
+                    if z != x and z != y and self.crossword.overlaps[x, z] is not None:
+                        arcs.append((z, x)) # Add (z, x) to the list of arcs to be processed
+        return True
 
     def assignment_complete(self, assignment):
         """
