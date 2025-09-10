@@ -192,7 +192,17 @@ class CrosswordCreator():
         The first value in the list, for example, should be the one
         that rules out the fewest values among the neighbors of `var`.
         """
-        raise NotImplementedError
+        def count_rule_outs(var_value):
+            count = 0
+            for neighbor in self.crossword.neighbors[var]:
+                if neighbor in assignment:
+                    continue  # Skip assigned neighbors
+                i, j = self.crossword.overlaps[var, neighbor]
+                if assignment[var][i] != assignment[neighbor][j]:
+                    count += 1  # If the overlap characters don't match, then this value is ruled out for the neighbor
+            return count
+
+        return sorted(self.domains[var], key=count_rule_outs)
 
     def select_unassigned_variable(self, assignment):
         """
@@ -202,7 +212,19 @@ class CrosswordCreator():
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
-        raise NotImplementedError
+        # Function to find the number of remaining values in the domain
+        def domain_size(var):
+            return len(self.domains[var])
+
+        # Function to find the degree of the variable
+        def degree(var):
+            return len(self.crossword.neighbors[var])
+
+        # Select the unassigned variable with the minimum domain size and then the highest degree
+        unassigned = [v for v in self.domains if v not in assignment]
+        if not unassigned:
+            return None  # Return None if all variables are assigned
+        return min(unassigned, key=lambda v: (domain_size(v), -degree(v)))
 
     def backtrack(self, assignment):
         """
