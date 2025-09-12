@@ -196,5 +196,8 @@ cython_debug/
 # exclude data files
 assets
 data
-.txt
+*/*.ttf
+*/*.txt
 .ttf
+.csv
+*/*.csv
