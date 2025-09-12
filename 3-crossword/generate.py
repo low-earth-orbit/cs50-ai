@@ -115,7 +115,8 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
-        for x_word in self.domains[x]:
+        revised = False
+        for x_word in self.domains[x].copy():
             hasCorresponding = False
             for y_word in self.domains[y]:
                 # Check if x and y overlap
@@ -129,8 +130,8 @@ class CrosswordCreator():
                     break
             if not hasCorresponding:
                 self.domains[x].remove(x_word)
-                return True
-        return False
+                revised = True
+        return revised
 
     def ac3(self, arcs=None):
         """
@@ -148,13 +149,15 @@ class CrosswordCreator():
                     if x != y and self.crossword.overlaps[x, y] is not None:
                         arcs.append((x, y))
         while arcs:
-            (x, y) = arcs.pop() # Get an arc (x, y) from the list for processing
-            if self.revise(x, y): # If a revision was made
-                if not self.domains[x]: # If domain is empty
+            (x, y) = arcs.pop()  # Get an arc (x, y) from the list for processing
+            if self.revise(x, y):  # If a revision was made
+                if not self.domains[x]:  # If domain is empty
                     return False
                 for z in self.domains:
                     if z != x and z != y and self.crossword.overlaps[x, z] is not None:
-                        arcs.append((z, x)) # Add (z, x) to the list of arcs to be processed
+                        arcs.append(
+                            (z, x)
+                        )  # Add (z, x) to the list of arcs to be processed
         return True
 
     def assignment_complete(self, assignment):
@@ -184,8 +187,12 @@ class CrosswordCreator():
 
         # All values must be distinct
         if len(set(assignment.values())) != len(assignment):
-            print("Assignment values are not distinct.")
             return False
+
+        # Every value is of the correct length
+        for var, word in assignment.items():
+            if len(word) != var.length:
+                return False
 
         # For each pair of variables with an overlap
         # `self.crossword.overlaps` is a dictionary. Keys are (x, y) tuples, values are (i, j) or None.
@@ -269,6 +276,7 @@ class CrosswordCreator():
                 if result is not None:
                     return result
         return None  # If no solution, return None
+
 
 def main():
 
