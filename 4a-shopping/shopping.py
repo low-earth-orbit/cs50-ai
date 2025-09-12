@@ -74,7 +74,7 @@ def load_data(filename):
         "Oct": 9,
         "Nov": 10,
         "Dec": 11,
-    }
+    }  # mapping of month to number
     with open(filename) as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -127,7 +127,24 @@ def evaluate(labels, predictions):
     representing the "true negative rate": the proportion of
     actual negative labels that were accurately identified.
     """
-    raise NotImplementedError
+    true_positives = 0
+    true_negatives = 0
+    actual_positives = 0
+    actual_negatives = 0
+    for actual, predicted in zip(
+        labels, predictions
+    ):  # zip() pairs elements from both lists
+        if actual == 1:
+            actual_positives += 1
+            if predicted == 1:
+                true_positives += 1
+        else:
+            actual_negatives += 1
+            if predicted == 0:
+                true_negatives += 1
+    sensitivity = true_positives / actual_positives if actual_positives else 0
+    specificity = true_negatives / actual_negatives if actual_negatives else 0
+    return (sensitivity, specificity)
 
 
 if __name__ == "__main__":
