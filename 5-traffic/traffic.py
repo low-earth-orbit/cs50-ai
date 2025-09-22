@@ -58,7 +58,23 @@ def load_data(data_dir):
     be a list of integer labels, representing the categories for each of the
     corresponding `images`.
     """
-    raise NotImplementedError
+    # Initialize lists to hold images and labels
+    images = []
+    labels = []
+
+    for category in range(NUM_CATEGORIES):
+        # Path to the category directory
+        category_dir = os.path.join(data_dir, str(category))
+
+        # Loop through each image file in the category directory
+        for filename in os.listdir(category_dir):
+            image_path = os.path.join(category_dir, filename)  # Path to the image file
+            image = cv2.imread(image_path)  # Each image is read as a numpy.ndarray
+            image = cv2.resize(image, (IMG_WIDTH, IMG_HEIGHT))  # Resize image
+            images.append(image)  # Add image to the list
+            labels.append(category)  # Add category label to the list
+
+    return (images, labels)
 
 
 def get_model():
@@ -67,7 +83,37 @@ def get_model():
     `input_shape` of the first layer is `(IMG_WIDTH, IMG_HEIGHT, 3)`.
     The output layer should have `NUM_CATEGORIES` units, one for each category.
     """
-    raise NotImplementedError
+    model = tf.keras.Sequential(
+        [
+            # Convolutional layer. Learn 32 filters using a 3x3 kernel.
+            tf.keras.layers.Conv2D(
+                32, (3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)
+            ),
+            # Max-pooling layer, using 2x2 pool size
+            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+            # Second convolution layer. The second layer uses 64 filters.
+            tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
+            # Second max pooling layer
+            tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+            # # Third convolution layer. The third layer uses 128 filters.
+            # tf.keras.layers.Conv2D(128, (3, 3), activation="relu"),
+            # # Third max pooling layer
+            # tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+            # Flatten units
+            tf.keras.layers.Flatten(),
+            # Hidden layer with dropout
+            tf.keras.layers.Dense(128, activation="relu"),
+            tf.keras.layers.Dropout(0.5),
+            # Output layer
+            tf.keras.layers.Dense(NUM_CATEGORIES, activation="softmax"),
+        ]
+    )
+
+    model.compile(
+        optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"]
+    )
+
+    return model
 
 
 if __name__ == "__main__":
