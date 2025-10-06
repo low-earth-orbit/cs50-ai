@@ -75,7 +75,7 @@ def visualize_attentions(tokens, attentions):
         for j in range(len(attentions[i])):  # for each beam
             for k in range(len(attentions[i][j])):  # for each head
                 generate_diagram(
-                    i + 1, j + 1, tokens, attentions[i][j][k]
+                    i + 1, k + 1, tokens, attentions[i][j][k]
                 )  # +1 for 1-indexed
 
 
