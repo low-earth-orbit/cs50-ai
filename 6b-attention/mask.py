@@ -37,7 +37,7 @@ def main():
         print(text.replace(tokenizer.mask_token, tokenizer.decode([token])))
 
     # Visualize attentions
-    # visualize_attentions(inputs.tokens(), result.attentions)
+    visualize_attentions(inputs.tokens(), result.attentions)
 
 
 def get_mask_token_index(mask_token_id, inputs):
@@ -57,9 +57,9 @@ def get_color_for_attention_score(attention_score):
     given `attention_score`. Each value should be in the range [0, 255].
     """
     # Color is a shade of gray, the red, blue, and green values should all be equal.
-    value = int((1 - attention_score) * 255)
-    print(value)
+    value = int(attention_score * 255)
     return (value, value, value)
+
 
 def visualize_attentions(tokens, attentions):
     """
@@ -71,13 +71,12 @@ def visualize_attentions(tokens, attentions):
     include both the layer number (starting count from 1) and head number
     (starting count from 1).
     """
-    # TODO: Update this function to produce diagrams for all layers and heads.
-    generate_diagram(
-        1,
-        1,
-        tokens,
-        attentions[0][0][0]
-    )
+    for i in range(len(attentions)):  # for each layer
+        for j in range(len(attentions[i])):  # for each beam
+            for k in range(len(attentions[i][j])):  # for each head
+                generate_diagram(
+                    i + 1, j + 1, tokens, attentions[i][j][k]
+                )  # +1 for 1-indexed
 
 
 def generate_diagram(layer_number, head_number, tokens, attention_weights):
