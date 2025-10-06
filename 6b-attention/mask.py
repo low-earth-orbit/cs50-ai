@@ -26,18 +26,18 @@ def main():
     if mask_token_index is None:
         sys.exit(f"Input must include mask token {tokenizer.mask_token}.")
 
-    # Use model to process input
-    model = TFBertForMaskedLM.from_pretrained(MODEL)
-    result = model(**inputs, output_attentions=True)
+    # # Use model to process input
+    # model = TFBertForMaskedLM.from_pretrained(MODEL)
+    # result = model(**inputs, output_attentions=True)
 
-    # Generate predictions
-    mask_token_logits = result.logits[0, mask_token_index]
-    top_tokens = tf.math.top_k(mask_token_logits, K).indices.numpy()
-    for token in top_tokens:
-        print(text.replace(tokenizer.mask_token, tokenizer.decode([token])))
+    # # Generate predictions
+    # mask_token_logits = result.logits[0, mask_token_index]
+    # top_tokens = tf.math.top_k(mask_token_logits, K).indices.numpy()
+    # for token in top_tokens:
+    #     print(text.replace(tokenizer.mask_token, tokenizer.decode([token])))
 
-    # Visualize attentions
-    visualize_attentions(inputs.tokens(), result.attentions)
+    # # Visualize attentions
+    # visualize_attentions(inputs.tokens(), result.attentions)
 
 
 def get_mask_token_index(mask_token_id, inputs):
@@ -45,9 +45,11 @@ def get_mask_token_index(mask_token_id, inputs):
     Return the index of the token with the specified `mask_token_id`, or
     `None` if not present in the `inputs`.
     """
-    # TODO: Implement this function
-    raise NotImplementedError
-
+    for i, token_id in enumerate(inputs["input_ids"][0].numpy()):
+        print(token_id)
+        if token_id == mask_token_id:
+            return i  # Assume only one mask token in the `inputs` sequence if present
+    return None
 
 
 def get_color_for_attention_score(attention_score):
@@ -57,7 +59,6 @@ def get_color_for_attention_score(attention_score):
     """
     # TODO: Implement this function
     raise NotImplementedError
-
 
 
 def visualize_attentions(tokens, attentions):
