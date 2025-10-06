@@ -26,17 +26,17 @@ def main():
     if mask_token_index is None:
         sys.exit(f"Input must include mask token {tokenizer.mask_token}.")
 
-    # # Use model to process input
-    # model = TFBertForMaskedLM.from_pretrained(MODEL)
-    # result = model(**inputs, output_attentions=True)
+    # Use model to process input
+    model = TFBertForMaskedLM.from_pretrained(MODEL)
+    result = model(**inputs, output_attentions=True)
 
-    # # Generate predictions
-    # mask_token_logits = result.logits[0, mask_token_index]
-    # top_tokens = tf.math.top_k(mask_token_logits, K).indices.numpy()
-    # for token in top_tokens:
-    #     print(text.replace(tokenizer.mask_token, tokenizer.decode([token])))
+    # Generate predictions
+    mask_token_logits = result.logits[0, mask_token_index]
+    top_tokens = tf.math.top_k(mask_token_logits, K).indices.numpy()
+    for token in top_tokens:
+        print(text.replace(tokenizer.mask_token, tokenizer.decode([token])))
 
-    # # Visualize attentions
+    # Visualize attentions
     # visualize_attentions(inputs.tokens(), result.attentions)
 
 
@@ -46,7 +46,6 @@ def get_mask_token_index(mask_token_id, inputs):
     `None` if not present in the `inputs`.
     """
     for i, token_id in enumerate(inputs["input_ids"][0].numpy()):
-        print(token_id)
         if token_id == mask_token_id:
             return i  # Assume only one mask token in the `inputs` sequence if present
     return None
@@ -57,9 +56,10 @@ def get_color_for_attention_score(attention_score):
     Return a tuple of three integers representing a shade of gray for the
     given `attention_score`. Each value should be in the range [0, 255].
     """
-    # TODO: Implement this function
-    raise NotImplementedError
-
+    # Color is a shade of gray, the red, blue, and green values should all be equal.
+    value = int((1 - attention_score) * 255)
+    print(value)
+    return (value, value, value)
 
 def visualize_attentions(tokens, attentions):
     """
